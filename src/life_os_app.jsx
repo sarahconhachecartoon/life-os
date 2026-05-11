@@ -5,10 +5,9 @@ import HogarSection,   { DEFAULT_HOGAR }    from './life_os_hogar';
 import TrabajoSection, { DEFAULT_TRABAJO }  from './life_os_trabajo';
 import PersonalSection,{ DEFAULT_PERSONAL } from './life_os_personal';
 
-const STORAGE_KEY = 'lifeos_state_v5'; // ← versión nueva para forzar migración limpia
+const STORAGE_KEY = 'lifeos_state_v5';
 const todayKey = (d = new Date()) => d.toISOString().slice(0, 10);
 
-// ─── Hábitos correctos (versión definitiva) ────────────────────
 const CORRECT_HABITS = {
   morning: [
     { id: 'hm1', label: 'Café',          doneDate: null },
@@ -29,7 +28,6 @@ const CORRECT_HABITS = {
   ],
 };
 
-// ─── Lectura: dos libros (Kindle + papel) ─────────────────────
 const DEFAULT_READING = {
   kindle: { title: '', author: '', currentPage: 0, totalPages: 0 },
   paper:  { title: '', author: '', currentPage: 0, totalPages: 0 },
@@ -43,12 +41,9 @@ const syncInspirationFromGallery = (state) => {
   return { ...state, inspirationImage: imgs[dayIdx] };
 };
 
-// Migra la estructura de lectura antigua (objeto simple) al nuevo formato (kindle+paper)
 const migrateReading = (reading) => {
   if (!reading) return DEFAULT_READING;
-  // Ya tiene el nuevo formato
   if (reading.kindle !== undefined) return reading;
-  // Tiene el formato viejo — lo pasa a kindle
   return {
     kindle: {
       title: reading.title || '',
@@ -79,17 +74,15 @@ const DEFAULT_STATE = {
   personal: DEFAULT_PERSONAL,
 };
 
-// Carga desde v4 (versión anterior) si v5 no existe aún
 const loadState = () => {
   try {
-    // Intentar cargar v5 primero
     const rawV5 = localStorage.getItem(STORAGE_KEY);
     if (rawV5) {
       const parsed = JSON.parse(rawV5);
       const merged = {
         ...DEFAULT_STATE,
         ...parsed,
-        habits:   CORRECT_HABITS, // siempre forzar hábitos correctos
+        habits:   CORRECT_HABITS,
         reading:  migrateReading(parsed.reading),
         fitness:  { ...DEFAULT_FITNESS,  ...(parsed.fitness  || {}) },
         hogar:    { ...DEFAULT_HOGAR,    ...(parsed.hogar    || {}) },
@@ -98,15 +91,13 @@ const loadState = () => {
       };
       return syncInspirationFromGallery(merged);
     }
-
-    // Migrar desde v4
     const rawV4 = localStorage.getItem('lifeos_state_v4');
     if (rawV4) {
       const parsed = JSON.parse(rawV4);
       const merged = {
         ...DEFAULT_STATE,
         ...parsed,
-        habits:   CORRECT_HABITS, // migrar hábitos
+        habits:   CORRECT_HABITS,
         reading:  migrateReading(parsed.reading),
         fitness:  { ...DEFAULT_FITNESS,  ...(parsed.fitness  || {}) },
         hogar:    { ...DEFAULT_HOGAR,    ...(parsed.hogar    || {}) },
@@ -115,7 +106,6 @@ const loadState = () => {
       };
       return syncInspirationFromGallery(merged);
     }
-
     return DEFAULT_STATE;
   } catch { return DEFAULT_STATE; }
 };
@@ -136,12 +126,10 @@ const applyDailyRollover = state => {
     lastOpenedDate: today,
     cycleLog: newCycleLog,
     tasks: state.tasks.filter(t => !t.done),
-    // Rollover hábitos: resetear doneDate pero mantener los labels correctos
     habits: {
       morning: CORRECT_HABITS.morning.map(h => ({ ...h, doneDate: null })),
       night:   CORRECT_HABITS.night.map(h   => ({ ...h, doneDate: null })),
     },
-    // Limpiar agenda del día anterior
     agenda: { today: [] },
   };
   return syncInspirationFromGallery(rolled);
@@ -259,5 +247,3 @@ export default function LifeOSApp() {
     </>
   );
 }
-
-
