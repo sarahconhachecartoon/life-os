@@ -395,25 +395,37 @@ export default function App() {
 
         <div style={{ width: 24, height: 1, background: `${currentColor}30`, marginBottom: 8 }} />
 
-        {/* Nav */}
+        {/* Nav — nombres verticales en Fraunces */}
         {sections.map(s => (
           <button
             key={s.id}
             onClick={() => setSection(s.id)}
             title={s.label}
             style={{
-              width: 36, height: 36,
+              width: 44,
+              padding: '8px 0',
               borderRadius: 10,
               border: 'none',
-              background: section === s.id ? `${currentColor}35` : 'transparent',
-              color: section === s.id ? currentColor : `${currentColor}80`,
+              background: section === s.id ? `${currentColor}30` : 'transparent',
               cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'all 0.2s ease',
-              transform: section === s.id ? 'scale(1.08)' : 'scale(1)',
             }}
           >
-            {s.icon}
+            <span style={{
+              fontFamily: "'Fraunces', serif",
+              fontStyle: 'italic',
+              fontSize: 10,
+              letterSpacing: '0.04em',
+              color: section === s.id ? currentColor : `${currentColor}70`,
+              writingMode: 'vertical-rl',
+              textOrientation: 'mixed',
+              transform: 'rotate(180deg)',
+              lineHeight: 1,
+              transition: 'color 0.2s',
+            }}>
+              {s.label}
+            </span>
           </button>
         ))}
       </aside>

@@ -43,15 +43,17 @@ const Card = ({ children, style = {} }) => (
   </div>
 );
 
-const SectionLabel = ({ children }) => (
+const SectionLabel = ({ children, style = {} }) => (
   <div style={{
-    fontFamily: "'Fraunces', serif",
-    fontStyle: 'italic',
-    fontSize: 11,
-    letterSpacing: '0.07em',
-    color: ACCENT,
-    textTransform: 'uppercase',
-    marginBottom: 12,
+    display: 'inline-flex', alignItems: 'center',
+    fontFamily: "'Fraunces', serif", fontStyle: 'italic',
+    fontSize: 11, letterSpacing: '0.04em',
+    color: '#fff',
+    background: ACCENT,
+    borderRadius: 20,
+    padding: '3px 12px',
+    marginBottom: 11,
+    ...style,
   }}>
     {children}
   </div>
