@@ -1,795 +1,550 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import Dashboard from './life_os_dashboard';
+import Fitness from './life_os_fitness';
+import Hogar from './life_os_hogar';
+import Trabajo from './life_os_trabajo';
+import Personal from './life_os_personal';
 
-const uid = () => Math.random().toString(36).slice(2, 9);
-const ACCENT = '#C9A0A0';
-const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
-                   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const CURRENT_YEAR = new Date().getFullYear();
-
-// ─── Iconos ────────────────────────────────────────────────────────────────────
-const IconPlus = ({size=14}) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-);
-const IconTrash = ({size=12}) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/>
+// ─── Iconos SVG ────────────────────────────────────────────────────────────────
+const IconDashboard = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+    <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
   </svg>
 );
-const IconCheck = ({size=11}) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 6 9 17l-5-5"/>
+const IconFitness = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 12h2m12 0h2M6 12v-2a2 2 0 014 0v4a2 2 0 004 0v-4a2 2 0 014 0v2"/>
   </svg>
 );
-const IconChevron = ({size=13, open}) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-    style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
-    <path d="M6 9l6 6 6-6"/>
+const IconHogar = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 12L12 3l9 9"/><path d="M9 21V12h6v9"/>
   </svg>
 );
-const IconStar = ({size=13, filled}) => (
-  <svg width={size} height={size} viewBox="0 0 24 24"
-    fill={filled ? 'currentColor' : 'none'}
-    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+const IconTrabajo = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/>
   </svg>
 );
-const IconLeft = ({size=14}) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+const IconPersonal = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+  </svg>
 );
-const IconRight = ({size=14}) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+const IconSettings = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M12 2v2m0 16v2M2 12h2m16 0h2m-3.22-8.78-1.42 1.42M5.64 18.36l-1.42 1.42m14.14 0-1.42-1.42M5.64 5.64 4.22 4.22"/>
+  </svg>
 );
-
-// ─── Card base ─────────────────────────────────────────────────────────────────
-const Card = ({ children, style = {} }) => (
-  <div style={{
-    background: '#FFFCF9',
-    borderRadius: 20,
-    border: '1px solid rgba(0,0,0,0.055)',
-    boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
-    padding: '18px 20px',
-    ...style,
-  }}>
-    {children}
-  </div>
+const IconClose = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 6 6 18M6 6l12 12"/>
+  </svg>
 );
 
-const SectionLabel = ({ children, style = {} }) => (
-  <div style={{
-    fontFamily: "'Fraunces', serif", fontStyle: 'italic',
-    fontSize: 11, letterSpacing: '0.07em',
-    color: ACCENT, textTransform: 'uppercase',
-    marginBottom: 10,
-    ...style,
-  }}>
-    {children}
-  </div>
-);
+// ─── Temas de color ─────────────────────────────────────────────────────────────
+const THEMES = {
+  rose:       { name: 'Rose',       accent: '#C9A0A0', light: '#F5EDEC', mid: '#D9B8B8' },
+  nude:       { name: 'Nude',       accent: '#C4A882', light: '#F5EFE5', mid: '#D4BE9E' },
+  peach:      { name: 'Peach',      accent: '#D9A892', light: '#F8EDE8', mid: '#E8C0AD' },
+  terracota:  { name: 'Terracota',  accent: '#B88A75', light: '#F2E8E2', mid: '#CFA898' },
+  topo:       { name: 'Topo',       accent: '#A89B8C', light: '#EEE9E4', mid: '#C0B5A8' },
+  beige:      { name: 'Beige',      accent: '#BFAE93', light: '#F2EDE3', mid: '#D4C8B0' },
+  moka:       { name: 'Moka',       accent: '#9E8572', light: '#EBE3DC', mid: '#B89E8C' },
+  salvia:     { name: 'Salvia',     accent: '#8FA888', light: '#E5EDDF', mid: '#AABFA4' },
+  eucalipto:  { name: 'Eucalipto',  accent: '#8FA89E', light: '#E2EDEA', mid: '#A8C0BA' },
+  oliva:      { name: 'Oliva',      accent: '#8A9878', light: '#E5EAE0', mid: '#A5B294' },
+  niebla:     { name: 'Niebla',     accent: '#9FB1B8', light: '#E5EDF0', mid: '#B8C8CE' },
+  humo:       { name: 'Humo',       accent: '#9BA8AF', light: '#E6EAEC', mid: '#B4BEC3' },
+  grisazul:   { name: 'Gris azul',  accent: '#8A9BAA', light: '#E2E8EE', mid: '#A4B3BF' },
+  lavanda:    { name: 'Lavanda',    accent: '#A89DB3', light: '#EDE9F2', mid: '#C0B8CC' },
+  ciruela:    { name: 'Ciruela',    accent: '#9A7A9A', light: '#EDE2ED', mid: '#B89AB8' },
+};
 
-// ─── INSPIRACIÓN MENSUAL ────────────────────────────────────────────────────────
-const InspirationCard = ({ gallery, onChange }) => {
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-  const key = `${new Date().getFullYear()}-${String(selectedMonth + 1).padStart(2, '0')}`;
-  const imgs = gallery[key] ?? [];
+// ─── Estado inicial ─────────────────────────────────────────────────────────────
+const getInitialState = () => ({
+  themeId: 'rose',
+  lastOpenedDate: '',
+  tasks: [],
+  habits: {
+    morning: [
+      { id: 'm1', label: 'Café', doneDate: null },
+      { id: 'm2', label: 'Trabajo', doneDate: null },
+      { id: 'm3', label: 'Skincare', doneDate: null },
+      { id: 'm4', label: 'Gym', doneDate: null },
+      { id: 'm5', label: 'Lectura', doneDate: null },
+      { id: 'm6', label: 'Hacer la cama', doneDate: null },
+    ],
+    night: [
+      { id: 'n1', label: 'Agenda', doneDate: null },
+      { id: 'n2', label: 'Notion', doneDate: null },
+      { id: 'n3', label: 'Day One', doneDate: null },
+      { id: 'n4', label: 'Dientes', doneDate: null },
+      { id: 'n5', label: 'Skincare', doneDate: null },
+      { id: 'n6', label: 'Trenza', doneDate: null },
+      { id: 'n7', label: 'Ropa para mañana', doneDate: null },
+    ],
+  },
+  agenda: { today: [] },
+  menu: { desayuno: '', snack: '', almuerzo: '', cena: '' },
+  reading: {
+    kindle: { title: '', author: '', currentPage: 0, totalPages: 0 },
+    paper:  { title: '', author: '', currentPage: 0, totalPages: 0 },
+    audio:  { title: '', author: '', currentPage: 0, totalPages: 0 },
+  },
+  notes: '',
+  body: { weight: [], waist: [], hip: [] },
+  cycleLog: {},
+  moodHistory: {},
+  inspirationImage: null,
+  fitness: {
+    bodyLog: [],
+    foodLibrary: { desayuno: [], snack: [], almuerzo: [], cena: [] },
+    weekMenu: {},
+    gymLog: {},
+    cycleStart: null,
+  },
+  hogar: {
+    rooms: {
+      Salón:       [],
+      Entrada:     [],
+      Cocina:      [],
+      Estudio:     [],
+      Dormitorio:  [],
+      Baño:        [],
+    },
+    shop: [],
+    ideas: '',
+    inspImages: [],
+  },
+  trabajo: {
+    budgets: [],
+    tasks: [],
+    buro: [],
+    // NUEVO: proyectos de cómic
+    comicProjects: [],
+  },
+  personal: {
+    gallery: {},       // { 'YYYY-MM': [base64, ...] }
+    projects: [],      // proyectos ballena
+    books: [],
+    films: [],
+    others: [],
+    wishlist: [],
+    ideas: '',
+    monomanias: [],
+    // NUEVO: libros por año
+    booksByYear: {},   // { '2026': [{ id, title, favorite }] }
+  },
+});
 
-  const handleUpload = (e) => {
-    const files = Array.from(e.target.files);
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = ev => {
-        onChange(key, [...(gallery[key] ?? []), ev.target.result]);
-      };
-      reader.readAsDataURL(file);
+// ─── Merge seguro (mantiene datos existentes, añade campos nuevos) ───────────────
+const mergeState = (saved) => {
+  try {
+    if (!saved || typeof saved !== 'object') return getInitialState();
+
+    const defaults = getInitialState();
+
+    // Garantizar que todos los sub-objetos existen antes de hacer spread
+    const safePersonal  = (saved.personal  && typeof saved.personal  === 'object') ? saved.personal  : {};
+    const safeTrabajo   = (saved.trabajo   && typeof saved.trabajo   === 'object') ? saved.trabajo   : {};
+    const safeFitness   = (saved.fitness   && typeof saved.fitness   === 'object') ? saved.fitness   : {};
+    const safeHogar     = (saved.hogar     && typeof saved.hogar     === 'object') ? saved.hogar     : {};
+    const safeReading   = (saved.reading   && typeof saved.reading   === 'object') ? saved.reading   : {};
+    const safeHabits    = (saved.habits    && typeof saved.habits    === 'object') ? saved.habits    : {};
+    const safeBody      = (saved.body      && typeof saved.body      === 'object') ? saved.body      : {};
+
+    return {
+      ...defaults,
+      ...saved,
+      // Campos planos con fallback
+      themeId:         saved.themeId        ?? defaults.themeId,
+      lastOpenedDate:  saved.lastOpenedDate  ?? defaults.lastOpenedDate,
+      tasks:           Array.isArray(saved.tasks) ? saved.tasks : [],
+      notes:           saved.notes          ?? '',
+      cycleLog:        saved.cycleLog        ?? {},
+      moodHistory:     saved.moodHistory     ?? {},
+      inspirationImage: saved.inspirationImage ?? null,
+      menu:            saved.menu            ?? defaults.menu,
+      agenda:          saved.agenda          ?? defaults.agenda,
+      // Sub-objetos
+      habits: {
+        morning: Array.isArray(safeHabits.morning) ? safeHabits.morning : defaults.habits.morning,
+        night:   Array.isArray(safeHabits.night)   ? safeHabits.night   : defaults.habits.night,
+      },
+      reading: {
+        kindle: { ...defaults.reading.kindle, ...(safeReading.kindle ?? {}) },
+        paper:  { ...defaults.reading.paper,  ...(safeReading.paper  ?? {}) },
+        audio:  { ...defaults.reading.audio,  ...(safeReading.audio  ?? {}) },
+      },
+      body: {
+        weight: Array.isArray(safeBody.weight) ? safeBody.weight : [],
+        waist:  Array.isArray(safeBody.waist)  ? safeBody.waist  : [],
+        hip:    Array.isArray(safeBody.hip)    ? safeBody.hip    : [],
+      },
+      fitness: { ...defaults.fitness, ...safeFitness },
+      hogar:   { ...defaults.hogar,   ...safeHogar   },
+      trabajo: {
+        ...defaults.trabajo,
+        ...safeTrabajo,
+        budgets:       Array.isArray(safeTrabajo.budgets)       ? safeTrabajo.budgets       : [],
+        tasks:         Array.isArray(safeTrabajo.tasks)         ? safeTrabajo.tasks         : [],
+        buro:          Array.isArray(safeTrabajo.buro)          ? safeTrabajo.buro          : [],
+        comicProjects: Array.isArray(safeTrabajo.comicProjects) ? safeTrabajo.comicProjects : [],
+      },
+      personal: {
+        ...defaults.personal,
+        ...safePersonal,
+        gallery:    (safePersonal.gallery    && typeof safePersonal.gallery    === 'object') ? safePersonal.gallery    : {},
+        projects:   Array.isArray(safePersonal.projects)   ? safePersonal.projects   : [],
+        books:      Array.isArray(safePersonal.books)      ? safePersonal.books      : [],
+        films:      Array.isArray(safePersonal.films)      ? safePersonal.films      : [],
+        others:     Array.isArray(safePersonal.others)     ? safePersonal.others     : [],
+        wishlist:   Array.isArray(safePersonal.wishlist)   ? safePersonal.wishlist   : [],
+        ideas:      safePersonal.ideas      ?? '',
+        monomanias: Array.isArray(safePersonal.monomanias) ? safePersonal.monomanias : [],
+        booksByYear:(safePersonal.booksByYear && typeof safePersonal.booksByYear === 'object') ? safePersonal.booksByYear : {},
+      },
+    };
+  } catch (e) {
+    console.warn('Life OS: error al leer datos guardados, usando estado inicial.', e);
+    return getInitialState();
+  }
+};
+
+// ─── Rollover diario ─────────────────────────────────────────────────────────────
+const today = () => new Date().toISOString().split('T')[0];
+const todayDow = () => new Date().getDay(); // 0=dom,1=lun,...,6=sab
+
+const applyRollover = (state) => {
+  const todayStr = today();
+  if (state.lastOpenedDate === todayStr) return state;
+
+  const dow = todayDow();
+
+  // Tareas: eliminar completadas. Recurrentes: regenerar si toca hoy.
+  const recurringToday = state.tasks
+    .filter(t => t.recurrence && t.recurrence.days && t.recurrence.days.includes(dow))
+    .map(t => ({ ...t, done: false }));
+  const pending = state.tasks.filter(t => !t.done && (!t.recurrence));
+  // Unir: pendientes normales + recurrentes de hoy (sin duplicar)
+  const existingRecurringIds = new Set(recurringToday.map(t => t.id));
+  const nonRecurringPending = pending.filter(t => !existingRecurringIds.has(t.id));
+  const newTasks = [...nonRecurringPending, ...recurringToday];
+
+  // Hábitos: reset doneDate
+  const resetHabits = (list) => list.map(h => ({ ...h, doneDate: null }));
+
+  // Ciclo: auto-incremento
+  const newCycleLog = { ...state.cycleLog };
+  if (state.lastOpenedDate) {
+    const lastDay = newCycleLog[state.lastOpenedDate];
+    if (lastDay !== undefined) newCycleLog[todayStr] = lastDay + 1;
+  }
+
+  // Imagen de inspiración: rotar índice
+  const currentMonth = new Date().toISOString().slice(0, 7);
+  const imgs = state.personal?.gallery?.[currentMonth] ?? [];
+  let nextImg = state.inspirationImage;
+  if (imgs.length > 0) {
+    const idx = imgs.indexOf(state.inspirationImage);
+    nextImg = imgs[(idx + 1) % imgs.length];
+  }
+
+  return {
+    ...state,
+    lastOpenedDate: todayStr,
+    tasks: newTasks,
+    habits: {
+      morning: resetHabits(state.habits.morning),
+      night:   resetHabits(state.habits.night),
+    },
+    agenda: { today: [] },
+    cycleLog: newCycleLog,
+    inspirationImage: nextImg,
+  };
+};
+
+// ─── localStorage key ────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'lifeos_state_v5';
+
+// ─── App principal ───────────────────────────────────────────────────────────────
+export default function App() {
+  const [state, setStateRaw] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (!saved) return applyRollover(getInitialState());
+      return applyRollover(mergeState(saved));
+    } catch {
+      return applyRollover(getInitialState());
+    }
+  });
+
+  const [section, setSection] = useState('dashboard');
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  // Auto-save
+  const setState = useCallback((updater) => {
+    setStateRaw(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      return next;
     });
+  }, []);
+
+  const theme = THEMES[state.themeId] ?? THEMES.rose;
+
+  // ── Export / Import ────────────────────────────────────────────────────────────
+  const handleExport = () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `lifeos-backup-${today()}.json`; a.click();
+    URL.revokeObjectURL(url);
   };
 
-  const removeImg = (idx) => {
-    const next = imgs.filter((_, i) => i !== idx);
-    onChange(key, next);
+  const handleImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        setState(mergeState(data));
+        setSettingsOpen(false);
+      } catch { alert('Archivo inválido'); }
+    };
+    reader.readAsText(file);
   };
+
+  // ── Secciones ──────────────────────────────────────────────────────────────────
+  const sections = [
+    { id: 'dashboard', icon: <IconDashboard />, label: 'Dashboard' },
+    { id: 'fitness',   icon: <IconFitness />,   label: 'Fitness'   },
+    { id: 'hogar',     icon: <IconHogar />,     label: 'Hogar'     },
+    { id: 'trabajo',   icon: <IconTrabajo />,   label: 'Trabajo'   },
+    { id: 'personal',  icon: <IconPersonal />,  label: 'Personal'  },
+  ];
+
+  const sectionColors = {
+    dashboard: theme.accent,
+    fitness:   '#D9A892',
+    hogar:     '#BFAE93',
+    trabajo:   '#8FA89E',
+    personal:  '#C9A0A0',
+  };
+
+  const currentColor = sectionColors[section] ?? theme.accent;
 
   return (
-    <div>
-      {/* Selector de mes */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 12 }}>
-        {MONTHS_ES.map((m, i) => (
+    <div style={{
+      display: 'flex',
+      height: '100vh',
+      width: '100vw',
+      background: '#FBF8F4',
+      fontFamily: "'Inter', sans-serif",
+      overflow: 'hidden',
+      position: 'relative',
+    }}>
+      {/* Halos de fondo */}
+      <div style={{
+        position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 0,
+        background: `
+          radial-gradient(ellipse 600px 400px at 0% 0%, ${currentColor}18 0%, transparent 70%),
+          radial-gradient(ellipse 500px 350px at 100% 100%, ${currentColor}12 0%, transparent 70%)
+        `,
+        transition: 'background 0.8s ease',
+      }} />
+
+      {/* ── Sidebar ── */}
+      <aside style={{
+        width: 56,
+        background: `linear-gradient(180deg, ${currentColor}22 0%, ${currentColor}10 100%)`,
+        backdropFilter: 'blur(12px)',
+        borderRight: `1px solid ${currentColor}30`,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        paddingTop: 16,
+        paddingBottom: 16,
+        gap: 4,
+        zIndex: 10,
+        position: 'relative',
+        transition: 'background 0.6s ease',
+      }}>
+        {/* Botón ajustes */}
+        <button
+          onClick={() => setSettingsOpen(true)}
+          title="Ajustes"
+          style={{
+            width: 36, height: 36,
+            borderRadius: 10,
+            border: 'none',
+            background: settingsOpen ? `${currentColor}40` : 'transparent',
+            color: currentColor,
+            cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            marginBottom: 12,
+            transition: 'background 0.2s',
+          }}
+        >
+          <IconSettings />
+        </button>
+
+        <div style={{ width: 24, height: 1, background: `${currentColor}30`, marginBottom: 8 }} />
+
+        {/* Nav */}
+        {sections.map(s => (
           <button
-            key={i}
-            onClick={() => setSelectedMonth(i)}
+            key={s.id}
+            onClick={() => setSection(s.id)}
+            title={s.label}
             style={{
-              padding: '3px 8px', borderRadius: 6, fontSize: 10,
-              border: `1px solid ${selectedMonth === i ? ACCENT : ACCENT + '30'}`,
-              background: selectedMonth === i ? `${ACCENT}20` : 'transparent',
-              color: selectedMonth === i ? ACCENT : '#9A8A80',
-              cursor: 'pointer', fontFamily: "'Inter', sans-serif",
+              width: 36, height: 36,
+              borderRadius: 10,
+              border: 'none',
+              background: section === s.id ? `${currentColor}35` : 'transparent',
+              color: section === s.id ? currentColor : `${currentColor}80`,
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.2s ease',
+              transform: section === s.id ? 'scale(1.08)' : 'scale(1)',
             }}
           >
-            {m.slice(0, 3)}
+            {s.icon}
           </button>
         ))}
-      </div>
+      </aside>
 
-      {/* Grid imágenes */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-        {imgs.map((src, i) => (
-          <div key={i} style={{ position: 'relative' }}>
-            <img src={src} alt="" style={{
-              width: 64, height: 64, objectFit: 'cover', borderRadius: 10,
-              border: `1px solid ${ACCENT}25`,
-            }} />
-            <button
-              onClick={() => removeImg(i)}
-              style={{
-                position: 'absolute', top: 2, right: 2,
-                width: 16, height: 16, borderRadius: '50%',
-                background: 'rgba(0,0,0,0.45)', border: 'none',
-                color: '#fff', cursor: 'pointer', fontSize: 9,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >✕</button>
-          </div>
-        ))}
-        <label style={{
-          width: 64, height: 64, borderRadius: 10,
-          border: `1.5px dashed ${ACCENT}40`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', color: `${ACCENT}70`,
-        }}>
-          <IconPlus size={18} />
-          <input type="file" accept="image/*" multiple onChange={handleUpload} style={{ display: 'none' }} />
-        </label>
-      </div>
-      <div style={{ fontSize: 10, color: '#B0A098' }}>{imgs.length} imagen{imgs.length !== 1 ? 'es' : ''} en {MONTHS_ES[selectedMonth]}</div>
-    </div>
-  );
-};
-
-// ─── LIBROS POR AÑO (NUEVO) ─────────────────────────────────────────────────────
-const BooksByYearCard = ({ booksByYear, onChange }) => {
-  const years = Object.keys(booksByYear).sort((a, b) => b - a);
-  if (!years.includes(String(CURRENT_YEAR))) years.unshift(String(CURRENT_YEAR));
-  const uniqueYears = [...new Set(years)];
-
-  const [yearIdx, setYearIdx] = useState(0);
-  const currentYearStr = uniqueYears[yearIdx] ?? String(CURRENT_YEAR);
-  const books = booksByYear[currentYearStr] ?? [];
-
-  // Input controlado con ref para evitar el bug de cursor
-  const [input, setInput] = useState('');
-  const inputRef = useRef(null);
-
-  const addBook = useCallback(() => {
-    if (!input.trim()) return;
-    const next = [...books, { id: uid(), title: input.trim(), favorite: false }];
-    onChange(currentYearStr, next);
-    setInput('');
-    // Mantener foco después de añadir
-    requestAnimationFrame(() => inputRef.current?.focus());
-  }, [input, books, currentYearStr, onChange]);
-
-  const toggleFav = (id) => {
-    onChange(currentYearStr, books.map(b => b.id === id ? { ...b, favorite: !b.favorite } : b));
-  };
-
-  const removeBook = (id) => {
-    onChange(currentYearStr, books.filter(b => b.id !== id));
-  };
-
-  const addYear = () => {
-    const y = prompt('Año:');
-    if (!y || isNaN(parseInt(y))) return;
-    const ys = String(parseInt(y));
-    if (!booksByYear[ys]) onChange(ys, []);
-  };
-
-  return (
-    <div>
-      {/* Navegación de año */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-        <button
-          onClick={() => setYearIdx(i => Math.min(i + 1, uniqueYears.length - 1))}
-          disabled={yearIdx >= uniqueYears.length - 1}
-          style={{
-            background: 'none', border: 'none', cursor: yearIdx >= uniqueYears.length - 1 ? 'default' : 'pointer',
-            color: yearIdx >= uniqueYears.length - 1 ? '#D8CEC8' : ACCENT, padding: 2,
-          }}
-        >
-          <IconLeft size={14} />
-        </button>
-
-        <span style={{
-          fontFamily: "'Fraunces', serif", fontStyle: 'italic',
-          fontSize: 18, color: '#3A3230', flex: 1, textAlign: 'center',
-        }}>
-          {currentYearStr}
-        </span>
-
-        <button
-          onClick={() => setYearIdx(i => Math.max(i - 1, 0))}
-          disabled={yearIdx <= 0}
-          style={{
-            background: 'none', border: 'none', cursor: yearIdx <= 0 ? 'default' : 'pointer',
-            color: yearIdx <= 0 ? '#D8CEC8' : ACCENT, padding: 2,
-          }}
-        >
-          <IconRight size={14} />
-        </button>
-
-        <button onClick={addYear} style={{
-          background: `${ACCENT}15`, border: 'none', borderRadius: 7,
-          width: 22, height: 22, cursor: 'pointer', color: ACCENT,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <IconPlus size={11} />
-        </button>
-      </div>
-
-      {/* Lista numerada */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 10, maxHeight: 220, overflowY: 'auto' }}>
-        {books.length === 0 && (
-          <div style={{ fontSize: 12, color: '#C0B0A8' }}>Sin libros aún</div>
+      {/* ── Contenido principal ── */}
+      <main style={{ flex: 1, overflow: 'hidden', position: 'relative', zIndex: 1 }}>
+        {section === 'dashboard' && (
+          <Dashboard state={state} setState={setState} theme={theme} themeId={state.themeId} themes={THEMES} />
         )}
-        {books.map((book, idx) => (
-          <div key={book.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 10, color: ACCENT, minWidth: 18, textAlign: 'right', flexShrink: 0 }}>
-              {idx + 1}.
-            </span>
-            <span style={{
-              flex: 1, fontSize: 12, color: '#3A3230',
-              fontStyle: book.favorite ? 'italic' : 'normal',
-            }}>
-              {book.title}
-            </span>
-            <button onClick={() => toggleFav(book.id)} style={{
-              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-              color: book.favorite ? ACCENT : '#D0C0B8',
-            }}>
-              <IconStar size={12} filled={book.favorite} />
-            </button>
-            <button onClick={() => removeBook(book.id)} style={{
-              background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-              color: '#D0C0B8',
-            }}>
-              <IconTrash size={11} />
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {/* Input añadir */}
-      <div style={{ display: 'flex', gap: 6 }}>
-        <input
-          ref={inputRef}
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && addBook()}
-          placeholder="Título del libro..."
-          style={{
-            flex: 1, padding: '7px 12px', borderRadius: 10,
-            border: `1px solid ${ACCENT}30`, background: '#FAF7F3',
-            fontSize: 12, color: '#3A3230', outline: 'none',
-            fontFamily: "'Inter', sans-serif",
-          }}
-        />
-        <button onClick={addBook} style={{
-          background: ACCENT, border: 'none', borderRadius: 10,
-          width: 28, height: 28, cursor: 'pointer', color: '#fff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        }}>
-          <IconPlus size={12} />
-        </button>
-      </div>
-
-      <div style={{ fontSize: 10, color: '#B0A098', marginTop: 8 }}>
-        {books.length} libro{books.length !== 1 ? 's' : ''} · {books.filter(b => b.favorite).length} favorito{books.filter(b => b.favorite).length !== 1 ? 's' : ''}
-      </div>
-    </div>
-  );
-};
-
-// ─── PROYECTOS BALLENA (con collapsable) ────────────────────────────────────────
-const ESTADOS = ['activo','pausado','terminado'];
-const ESTADO_COLORS = { activo: '#9FB1B8', pausado: '#C9A0A0', terminado: '#8FA888' };
-
-const WhaleProjectCard = ({ project, onUpdate, onDelete }) => {
-  const [subInput, setSubInput] = useState('');
-  const subInputRef = useRef(null);
-  const isCollapsed = project.collapsed ?? false;
-
-  const toggleCollapsed = () => onUpdate({ ...project, collapsed: !isCollapsed });
-
-  const addSubtask = () => {
-    if (!subInput.trim()) return;
-    onUpdate({
-      ...project,
-      subtasks: [...(project.subtasks ?? []), { id: uid(), text: subInput.trim(), done: false }],
-    });
-    setSubInput('');
-    requestAnimationFrame(() => subInputRef.current?.focus());
-  };
-
-  const toggleSub = (id) => onUpdate({
-    ...project,
-    subtasks: project.subtasks.map(s => s.id === id ? { ...s, done: !s.done } : s),
-  });
-
-  const removeSub = (id) => onUpdate({
-    ...project,
-    subtasks: project.subtasks.filter(s => s.id !== id),
-  });
-
-  const setEstado = (estado) => onUpdate({ ...project, estado });
-  const estadoColor = ESTADO_COLORS[project.estado] ?? ACCENT;
-  const doneCount = (project.subtasks ?? []).filter(s => s.done).length;
-  const total = (project.subtasks ?? []).length;
-
-  return (
-    <div style={{
-      borderRadius: 14,
-      border: `1px solid ${estadoColor}25`,
-      background: `${estadoColor}06`,
-      marginBottom: 8,
-      overflow: 'hidden',
-    }}>
-      {/* Header */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 8,
-        padding: '10px 12px',
-        cursor: 'pointer',
-      }} onClick={toggleCollapsed}>
-        <IconChevron size={12} open={!isCollapsed} />
-        <span style={{
-          flex: 1, fontFamily: "'Fraunces', serif", fontStyle: 'italic',
-          fontSize: 13, color: '#3A3230',
-        }}>
-          {project.title}
-        </span>
-        {total > 0 && (
-          <span style={{ fontSize: 10, color: estadoColor }}>
-            {doneCount}/{total}
-          </span>
+        {section === 'fitness' && (
+          <Fitness state={state} setState={setState} />
         )}
-        {/* Estado pill */}
-        <div style={{ display: 'flex', gap: 3 }}>
-          {ESTADOS.map(e => (
-            <button
-              key={e}
-              onClick={ev => { ev.stopPropagation(); setEstado(e); }}
-              style={{
-                padding: '2px 6px', borderRadius: 5, fontSize: 9,
-                border: `1px solid ${ESTADO_COLORS[e] + (project.estado === e ? 'FF' : '40')}`,
-                background: project.estado === e ? `${ESTADO_COLORS[e]}25` : 'transparent',
-                color: ESTADO_COLORS[e], cursor: 'pointer',
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              {e}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={e => { e.stopPropagation(); onDelete(project.id); }}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#D0C0B8', padding: 0 }}
-        >
-          <IconTrash size={11} />
-        </button>
-      </div>
+        {section === 'hogar' && (
+          <Hogar state={state} setState={setState} />
+        )}
+        {section === 'trabajo' && (
+          <Trabajo state={state} setState={setState} />
+        )}
+        {section === 'personal' && (
+          <Personal state={state} setState={setState} onNavigate={setSection} />
+        )}
+      </main>
 
-      {/* Subtareas desplegables */}
-      {!isCollapsed && (
-        <div style={{ padding: '0 12px 10px', borderTop: `1px solid ${estadoColor}15` }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8, marginBottom: 8 }}>
-            {(project.subtasks ?? []).map(sub => (
-              <div key={sub.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div
-                  onClick={() => toggleSub(sub.id)}
-                  style={{
-                    width: 14, height: 14, borderRadius: 4, flexShrink: 0,
-                    border: `1.5px solid ${sub.done ? estadoColor : '#C8B8B0'}`,
-                    background: sub.done ? estadoColor : 'transparent',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#fff', transition: 'all 0.15s',
-                  }}
-                >
-                  {sub.done && <IconCheck size={8} />}
-                </div>
-                <span style={{
-                  flex: 1, fontSize: 12, color: '#3A3230',
-                  textDecoration: sub.done ? 'line-through' : 'none',
-                  opacity: sub.done ? 0.5 : 1,
-                }}>
-                  {sub.text}
-                </span>
-                <button onClick={() => removeSub(sub.id)} style={{
-                  background: 'none', border: 'none', cursor: 'pointer', color: '#D0C0B8', padding: 0,
-                }}>
-                  <IconTrash size={10} />
-                </button>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: 5 }}>
-            <input
-              ref={subInputRef}
-              value={subInput}
-              onChange={e => setSubInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addSubtask()}
-              placeholder="Subtarea..."
-              style={{
-                flex: 1, padding: '5px 10px', borderRadius: 8,
-                border: `1px solid ${estadoColor}25`, background: '#FAF7F3',
-                fontSize: 12, color: '#3A3230', outline: 'none',
-                fontFamily: "'Inter', sans-serif",
-              }}
-            />
-            <button onClick={addSubtask} style={{
-              background: estadoColor, border: 'none', borderRadius: 8,
-              width: 24, height: 24, cursor: 'pointer', color: '#fff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}>
-              <IconPlus size={11} />
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ─── INTERESES (con fix del bug de cursor) ─────────────────────────────────────
-// El bug ocurría porque los inputs recibían una key dinámica o el estado se
-// re-montaba. Aquí se usan inputs controlados estables con useCallback.
-const InterestsList = ({ items, onChange, label }) => {
-  const [input, setInput] = useState('');
-  const inputRef = useRef(null);
-
-  const add = useCallback(() => {
-    if (!input.trim()) return;
-    onChange([...items, { id: uid(), text: input.trim(), done: false }]);
-    setInput('');
-    requestAnimationFrame(() => inputRef.current?.focus());
-  }, [input, items, onChange]);
-
-  const toggle = useCallback((id) => {
-    onChange(items.map(i => i.id === id ? { ...i, done: !i.done } : i));
-  }, [items, onChange]);
-
-  const remove = useCallback((id) => {
-    onChange(items.filter(i => i.id !== id));
-  }, [items, onChange]);
-
-  return (
-    <div style={{ marginBottom: 12 }}>
-      <div style={{ fontSize: 10, color: ACCENT, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
-        {label}
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginBottom: 6 }}>
-        {items.map(item => (
-          <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div
-              onClick={() => toggle(item.id)}
-              style={{
-                width: 14, height: 14, borderRadius: 4, flexShrink: 0,
-                border: `1.5px solid ${item.done ? ACCENT : '#C8B8B0'}`,
-                background: item.done ? ACCENT : 'transparent',
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', transition: 'all 0.15s',
-              }}
-            >
-              {item.done && <IconCheck size={8} />}
-            </div>
-            <span style={{
-              flex: 1, fontSize: 12, color: '#3A3230',
-              textDecoration: item.done ? 'line-through' : 'none',
-              opacity: item.done ? 0.5 : 1,
-            }}>
-              {item.text}
-            </span>
-            <button onClick={() => remove(item.id)} style={{
-              background: 'none', border: 'none', cursor: 'pointer', color: '#D0C0B8', padding: 0,
-            }}>
-              <IconTrash size={10} />
-            </button>
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'flex', gap: 5 }}>
-        <input
-          ref={inputRef}
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && add()}
-          placeholder={`Añadir ${label.toLowerCase()}...`}
-          style={{
-            flex: 1, padding: '6px 10px', borderRadius: 8,
-            border: `1px solid ${ACCENT}25`, background: '#FAF7F3',
-            fontSize: 12, color: '#3A3230', outline: 'none',
-            fontFamily: "'Inter', sans-serif",
-          }}
-        />
-        <button onClick={add} style={{
-          background: ACCENT, border: 'none', borderRadius: 8,
-          width: 24, height: 24, cursor: 'pointer', color: '#fff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        }}>
-          <IconPlus size={11} />
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// ─── MONOMANÍAS ────────────────────────────────────────────────────────────────
-const MonomaniasSection = ({ monomanias, onChange }) => {
-  const [input, setInput] = useState('');
-  const inputRef = useRef(null);
-
-  const add = () => {
-    if (!input.trim()) return;
-    onChange([...monomanias, { id: uid(), title: input.trim(), notes: '', active: false }]);
-    setInput('');
-    requestAnimationFrame(() => inputRef.current?.focus());
-  };
-
-  const toggle = (id) => onChange(
-    monomanias.map(m => ({ ...m, active: m.id === id ? !m.active : false }))
-  );
-
-  const remove = (id) => onChange(monomanias.filter(m => m.id !== id));
-
-  const updateNotes = (id, notes) => onChange(monomanias.map(m => m.id === id ? { ...m, notes } : m));
-
-  return (
-    <div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 8 }}>
-        {monomanias.map(m => (
-          <div key={m.id} style={{
-            borderRadius: 12, border: `1px solid ${m.active ? ACCENT : ACCENT + '25'}`,
-            background: m.active ? `${ACCENT}10` : 'transparent',
-            padding: '8px 10px',
+      {/* ── Panel de ajustes ── */}
+      {settingsOpen && (
+        <>
+          <div
+            onClick={() => setSettingsOpen(false)}
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.15)',
+              zIndex: 100, backdropFilter: 'blur(2px)',
+            }}
+          />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: '#FDFAF7',
+            borderRadius: 24,
+            border: `1px solid ${currentColor}30`,
+            boxShadow: `0 24px 64px rgba(0,0,0,0.12), 0 0 0 1px ${currentColor}10`,
+            padding: '32px 36px',
+            width: 480,
+            zIndex: 101,
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: m.active ? 6 : 0 }}>
-              <button
-                onClick={() => toggle(m.id)}
-                style={{
-                  width: 10, height: 10, borderRadius: '50%',
-                  background: m.active ? ACCENT : 'transparent',
-                  border: `1.5px solid ${m.active ? ACCENT : '#C8B8B0'}`,
-                  cursor: 'pointer', flexShrink: 0, padding: 0,
-                }}
-              />
-              <span style={{ flex: 1, fontSize: 12, color: '#3A3230', fontWeight: m.active ? '500' : '400' }}>
-                {m.title}
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+              <span style={{ fontFamily: "'Fraunces', serif", fontSize: 20, color: '#3A3230', fontStyle: 'italic' }}>
+                Ajustes
               </span>
-              <button onClick={() => remove(m.id)} style={{
-                background: 'none', border: 'none', cursor: 'pointer', color: '#D0C0B8', padding: 0,
+              <button onClick={() => setSettingsOpen(false)} style={{
+                background: 'none', border: 'none', cursor: 'pointer', color: '#9A8A80', padding: 4,
               }}>
-                <IconTrash size={10} />
+                <IconClose />
               </button>
             </div>
-            {m.active && (
-              <textarea
-                value={m.notes}
-                onChange={e => updateNotes(m.id, e.target.value)}
-                placeholder="Notas..."
+
+            {/* Selector de tema */}
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ fontSize: 11, letterSpacing: '0.08em', color: '#9A8A80', textTransform: 'uppercase', marginBottom: 12 }}>
+                Color del dashboard
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {Object.entries(THEMES).map(([id, t]) => (
+                  <button
+                    key={id}
+                    onClick={() => setState(s => ({ ...s, themeId: id }))}
+                    title={t.name}
+                    style={{
+                      width: 28, height: 28,
+                      borderRadius: '50%',
+                      background: t.accent,
+                      border: state.themeId === id
+                        ? `2.5px solid ${t.accent}` : '2.5px solid transparent',
+                      outline: state.themeId === id ? `3px solid ${t.accent}40` : 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      transform: state.themeId === id ? 'scale(1.15)' : 'scale(1)',
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div style={{ height: 1, background: `${currentColor}20`, marginBottom: 24 }} />
+
+            {/* Export / Import */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <button
+                onClick={handleExport}
                 style={{
-                  width: '100%', boxSizing: 'border-box',
-                  resize: 'none', border: 'none', outline: 'none',
-                  background: 'transparent', fontSize: 11,
-                  color: '#5A4A42', fontFamily: "'Inter', sans-serif",
-                  lineHeight: 1.5, minHeight: 50,
+                  padding: '11px 20px',
+                  borderRadius: 12,
+                  border: `1.5px solid ${currentColor}40`,
+                  background: 'transparent',
+                  color: '#5A4A42',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  fontFamily: "'Inter', sans-serif",
+                  textAlign: 'left',
+                  transition: 'background 0.2s',
                 }}
-              />
-            )}
-          </div>
-        ))}
-      </div>
-      <div style={{ display: 'flex', gap: 5 }}>
-        <input
-          ref={inputRef}
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && add()}
-          placeholder="Nueva monomanía..."
-          style={{
-            flex: 1, padding: '6px 10px', borderRadius: 8,
-            border: `1px solid ${ACCENT}25`, background: '#FAF7F3',
-            fontSize: 12, color: '#3A3230', outline: 'none',
-            fontFamily: "'Inter', sans-serif",
-          }}
-        />
-        <button onClick={add} style={{
-          background: ACCENT, border: 'none', borderRadius: 8,
-          width: 24, height: 24, cursor: 'pointer', color: '#fff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        }}>
-          <IconPlus size={11} />
-        </button>
-      </div>
-    </div>
-  );
-};
+                onMouseOver={e => e.currentTarget.style.background = `${currentColor}15`}
+                onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+              >
+                Exportar datos (JSON)
+              </button>
 
-// ─── PERSONAL principal ────────────────────────────────────────────────────────
-export default function Personal({ state, setState }) {
-  const setPersonal = (updater) => {
-    setState(s => ({
-      ...s,
-      personal: typeof updater === 'function' ? updater(s.personal) : updater,
-    }));
-  };
-
-  const updateGallery = (key, imgs) => {
-    setPersonal(p => ({ ...p, gallery: { ...p.gallery, [key]: imgs } }));
-    // Actualizar imagen de inspiración si es el mes actual
-    const currentMonthKey = new Date().toISOString().slice(0, 7);
-    if (key === currentMonthKey && imgs.length > 0) {
-      setState(s => ({ ...s, inspirationImage: imgs[0] }));
-    }
-  };
-
-  const updateBooksByYear = (year, books) => {
-    setPersonal(p => ({ ...p, booksByYear: { ...p.booksByYear, [year]: books } }));
-  };
-
-  const updateProjects = (projects) => setPersonal(p => ({ ...p, projects }));
-  const updateMonomanias = (m) => setPersonal(p => ({ ...p, monomanias: m }));
-
-  const updateWhalProject = (proj) => updateProjects(
-    (state.personal.projects ?? []).map(p => p.id === proj.id ? proj : p)
-  );
-  const deleteWhaleProject = (id) => updateProjects(
-    (state.personal.projects ?? []).filter(p => p.id !== id)
-  );
-
-  const addWhaleProject = () => {
-    const title = prompt('Título del proyecto:');
-    if (!title?.trim()) return;
-    updateProjects([
-      ...(state.personal.projects ?? []),
-      { id: uid(), title: title.trim(), estado: 'activo', collapsed: false, subtasks: [] },
-    ]);
-  };
-
-  return (
-    <div style={{
-      height: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      padding: '14px 18px',
-      gap: 10,
-      boxSizing: 'border-box',
-      overflowY: 'auto',
-    }}>
-      {/* Topbar */}
-      <div style={{
-        padding: '10px 20px',
-        background: '#FFFCF9',
-        borderRadius: 16,
-        border: '1px solid rgba(0,0,0,0.05)',
-        flexShrink: 0,
-        display: 'flex', alignItems: 'center',
-      }}>
-        <span style={{ fontFamily: "'Fraunces', serif", fontStyle: 'italic', fontSize: 18, color: '#3A3230' }}>
-          Personal
-        </span>
-        <div style={{ flex: 1 }} />
-        <div style={{ width: 8, height: 8, borderRadius: '50%', background: ACCENT, marginRight: 6 }} />
-        <span style={{ fontSize: 11, color: ACCENT, letterSpacing: '0.07em' }}>rosa empolvado</span>
-      </div>
-
-      {/* Grid 4 columnas */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1.1fr 1fr 1fr 1fr',
-        gap: 10,
-        flex: 1,
-        overflow: 'hidden',
-        minHeight: 0,
-      }}>
-
-        {/* COL 1: Inspiración + Libros por año */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto' }}>
-          <Card>
-            <SectionLabel>Inspiración mensual</SectionLabel>
-            <InspirationCard
-              gallery={state.personal.gallery ?? {}}
-              onChange={updateGallery}
-            />
-          </Card>
-
-          {/* NUEVO: Libros por año */}
-          <Card>
-            <SectionLabel>Libros por año</SectionLabel>
-            <BooksByYearCard
-              booksByYear={state.personal.booksByYear ?? {}}
-              onChange={updateBooksByYear}
-            />
-          </Card>
-        </div>
-
-        {/* COL 2: Proyectos Ballena */}
-        <Card style={{ overflowY: 'auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            <SectionLabel style={{ marginBottom: 0 }}>Proyectos Ballena</SectionLabel>
-            <button onClick={addWhaleProject} style={{
-              background: `${ACCENT}18`, border: 'none', borderRadius: 7,
-              width: 24, height: 24, cursor: 'pointer', color: ACCENT,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <IconPlus size={12} />
-            </button>
-          </div>
-          {(state.personal.projects ?? []).length === 0 ? (
-            <div style={{ fontSize: 12, color: '#C0B0A8' }}>Sin proyectos</div>
-          ) : (
-            (state.personal.projects ?? []).map(p => (
-              <WhaleProjectCard
-                key={p.id}
-                project={p}
-                onUpdate={updateWhalProject}
-                onDelete={deleteWhaleProject}
-              />
-            ))
-          )}
-        </Card>
-
-        {/* COL 3: Intereses */}
-        <Card style={{ overflowY: 'auto' }}>
-          <SectionLabel>Intereses</SectionLabel>
-          <InterestsList
-            label="Libros"
-            items={state.personal.books ?? []}
-            onChange={b => setPersonal(p => ({ ...p, books: b }))}
-          />
-          <InterestsList
-            label="Películas"
-            items={state.personal.films ?? []}
-            onChange={f => setPersonal(p => ({ ...p, films: f }))}
-          />
-          <InterestsList
-            label="Otros"
-            items={state.personal.others ?? []}
-            onChange={o => setPersonal(p => ({ ...p, others: o }))}
-          />
-        </Card>
-
-        {/* COL 4: Wishlist + Ideas + Monomanías */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, overflowY: 'auto' }}>
-          <Card>
-            <SectionLabel>Wishlist</SectionLabel>
-            <InterestsList
-              label=""
-              items={state.personal.wishlist ?? []}
-              onChange={w => setPersonal(p => ({ ...p, wishlist: w }))}
-            />
-          </Card>
-
-          <Card>
-            <SectionLabel>Ideas</SectionLabel>
-            <textarea
-              value={state.personal.ideas ?? ''}
-              onChange={e => setPersonal(p => ({ ...p, ideas: e.target.value }))}
-              placeholder="Ideas libres..."
-              style={{
-                width: '100%', boxSizing: 'border-box',
-                resize: 'none', border: 'none', outline: 'none',
-                background: 'transparent', fontSize: 12,
-                color: '#3A3230', fontFamily: "'Inter', sans-serif",
-                lineHeight: 1.6, minHeight: 80,
+              <label style={{
+                padding: '11px 20px',
+                borderRadius: 12,
+                border: `1.5px solid ${currentColor}40`,
+                background: 'transparent',
+                color: '#5A4A42',
+                fontSize: 13,
+                cursor: 'pointer',
+                transition: 'background 0.2s',
               }}
-            />
-          </Card>
+                onMouseOver={e => e.currentTarget.style.background = `${currentColor}15`}
+                onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+              >
+                Importar datos (JSON)
+                <input type="file" accept=".json" onChange={handleImport} style={{ display: 'none' }} />
+              </label>
+            </div>
 
-          <Card style={{ flex: 1 }}>
-            <SectionLabel>Monomanías</SectionLabel>
-            <MonomaniasSection
-              monomanias={state.personal.monomanias ?? []}
-              onChange={updateMonomanias}
-            />
-          </Card>
-        </div>
-      </div>
+            <div style={{ marginTop: 20, fontSize: 11, color: '#B0A098', lineHeight: 1.6 }}>
+              Los datos se guardan automáticamente en tu navegador.
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
